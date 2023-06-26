@@ -29,16 +29,16 @@ function writeRegistryToFile(
     scope = '@' + scope;
   }
   if (scope) {
-    scope = scope.toLowerCase();
+    scope = scope.toLowerCase() + ':';
   }
 
   core.debug(`Setting auth in ${fileLocation}`);
-  let newContents: string = '';
+  let newContents = '';
   if (fs.existsSync(fileLocation)) {
     const curContents: string = fs.readFileSync(fileLocation, 'utf8');
     curContents.split(os.EOL).forEach((line: string) => {
       // Add current contents unless they are setting the registry
-      if (!line.toLowerCase().startsWith('registry')) {
+      if (!line.toLowerCase().startsWith(`${scope}registry`)) {
         newContents += line + os.EOL;
       }
     });
@@ -46,10 +46,14 @@ function writeRegistryToFile(
   // Remove http: or https: from front of registry.
   const authString: string =
     registryUrl.replace(/(^\w+:|^)/, '') + ':_authToken=${NODE_AUTH_TOKEN}';
+<< Watem-actions
+  const registryString = `${scope}registry=${registryUrl}`;
+
   const registryString: string = scope
     ? `${scope}:registry=${registryUrl}`
     : `registry=${registryUrl}`;
-  const alwaysAuthString: string = `always-auth=${alwaysAuth}`;
+>> main
+  const alwaysAuthString = `always-auth=${alwaysAuth}`;
   newContents += `${authString}${os.EOL}${registryString}${os.EOL}${alwaysAuthString}`;
   fs.writeFileSync(fileLocation, newContents);
   core.exportVariable('NPM_CONFIG_USERCONFIG', fileLocation);
